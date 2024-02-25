@@ -1,0 +1,15 @@
+spring:
+  profiles:
+    active:
+      - prod
+
+bot:
+  name: fjStreamBot
+  password: bot_password_here
+obs:
+  host: 127.0.0.1
+  port: 4455
+  password: secret_password_here
+
+youtube:
+  apiKey: secret_password_here
