@@ -3,4 +3,3 @@
 * [x] OBSController to start and stop stream
 * [x] Client for inetmafia.ru to grab game states.
 * [ ]  Stream coordinator 
-* Youtube Scheduler stop stream if no new games set during time
