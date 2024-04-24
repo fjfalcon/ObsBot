@@ -39,4 +39,5 @@ build/
 .DS_Store
 
 src/main/resources/application-prod.yml
+src/main/resources/client_secrets.json
 deploy.sh

@@ -1,6 +1,7 @@
 package com.fjfalcon.obs;
 
 import com.fjfalcon.config.ObsProperties;
+import com.google.api.client.json.Json;
 import com.google.gson.JsonObject;
 import io.obswebsocket.community.client.OBSRemoteController;
 import io.obswebsocket.community.client.message.request.inputs.SetInputSettingsRequest;
@@ -29,8 +30,6 @@ public class ObsController {
 
         connect();
     }
-
-
 
     private void connect() {
         controller.connect();
@@ -88,10 +87,36 @@ public class ObsController {
         }
     }
 
+    public String startStreaming() {
+        var response = controller.startStream(1000L);
+        logger.info("Obs responded with status {}, with data {}", response.getMessageData().getRequestStatus(), response.getMessageData().getResponseData());
+        return "ok";
+    }
+
+    public String stopStreaming() {
+        var response = controller.stopStream(1000L);
+        logger.info("Obs responded with status {}, with data {}", response.getMessageData().getRequestStatus(), response.getMessageData().getResponseData());
+        return "ok";
+    }
+
     @PreDestroy
     public void close() {
         controller.disconnect();
         controller.stop();
+    }
+
+    public void setStreamKey(String key) {
+        logger.info("Setting key to {}", key);
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("key", key);
+        controller.setStreamServiceSettings("rtmp_common", jsonObject, response ->
+                logger.info("Obs responded with status {}, with data {}", response.getMessageData().getRequestStatus(), response.getMessageData().getResponseData()));
+    }
+
+    public boolean isStreamEnabled() {
+         var status = controller.getStreamStatus(1000L);
+        logger.info("Obs responded with status {}, with data {}", status.getMessageData().getRequestStatus(), status.getMessageData().getResponseData());
+         return status.getMessageData().getResponseData().getOutputActive();
     }
 
 }

@@ -13,3 +13,7 @@ obs:
 
 youtube:
   apiKey: secret_password_here
+
+logging:
+  level:
+    org.springframework.web.socket: DEBUG
