@@ -119,4 +119,8 @@ public class ObsController {
          return status.getMessageData().getResponseData().getOutputActive();
     }
 
+    public String getUrl() {
+        var settings = controller.getInputSettings("Inetmafia", 1000L);
+        return settings.getInputSettings().get("url").getAsString();
+    }
 }

@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class BotProperties {
     private String name;
     private String password;
+    private Long myChatId;
 
     public String getName() {
         return name;
@@ -21,5 +22,13 @@ public class BotProperties {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Long getMyChatId() {
+        return myChatId;
+    }
+
+    public void setMyChatId(Long myChatId) {
+        this.myChatId = myChatId;
     }
 }

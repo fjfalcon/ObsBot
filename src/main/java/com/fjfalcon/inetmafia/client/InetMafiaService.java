@@ -23,4 +23,8 @@ public class InetMafiaService {
         int lobbyId = Integer.parseInt(id);
         return inetMafiaClient.getLobbies().stream().filter(it -> it.getId() == lobbyId).findAny().map(it -> it.getPlayers().getPlayers().stream().sorted(Comparator.comparing(Player::getPosition)).map(Player::toString).collect(Collectors.joining("\n"))).orElse("Игроков не найдено, или игры не найдено, или ты просто не нравишься мне.");
     }
+
+    public void updateLobby() {
+        inetMafiaClient.updateLobby();
+    }
 }

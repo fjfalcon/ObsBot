@@ -11,8 +11,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableConfigurationProperties({BotProperties.class, ObsProperties.class})
 @EnableScheduling
 public class ObsApplication {
-
-
     public static void main(String[] args) {
         SpringApplication.run(ObsApplication.class);
     }

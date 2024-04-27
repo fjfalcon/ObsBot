@@ -79,13 +79,13 @@ public class ObsPoll extends TelegramLongPollingBot {
             sendText(update, String.valueOf(msg));
         } else if (text.contains("/game")) {
             var msg = inetMafiaService.isGameIsRunning(text.substring(6));
-            sendText(update, String.format("Game %s is online: %s",text.substring(6), msg));
-        }  else if (text.contains("/players")) {
-        var msg = inetMafiaService.getPlayers(text.substring(9));
-        sendText(update, msg);
-    }
-
-        else {
+            sendText(update, String.format("Game %s is online: %s", text.substring(6), msg));
+        } else if (text.contains("/players")) {
+            var msg = inetMafiaService.getPlayers(text.substring(9));
+            sendText(update, msg);
+        } else if (text.contains("/chat_id")) {
+            sendText(update, update.getMessage().getChatId().toString());
+        } else {
             sendText(update, "kek");
         }
     }
@@ -112,5 +112,18 @@ public class ObsPoll extends TelegramLongPollingBot {
     @Override
     public void onRegister() {
         super.onRegister();
+    }
+
+    public void sendTextToMe(String text) {
+        if (text.isBlank())
+            return;
+        SendMessage message = new SendMessage();
+        message.setChatId(botProperties.getMyChatId());
+        message.setText(text);
+        try {
+            sendApiMethod(message);
+        } catch (TelegramApiException e) {
+            logger.error("Failed to send message to master", e);
+        }
     }
 }

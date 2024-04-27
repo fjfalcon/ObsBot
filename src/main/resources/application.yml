@@ -6,6 +6,7 @@ spring:
 bot:
   name: fjStreamBot
   password: bot_password_here
+  myChatId: 99999999999999999999
 obs:
   host: 127.0.0.1
   port: 4455
