@@ -25,7 +25,6 @@ import com.google.api.services.youtube.model.LiveBroadcastStatus;
 import com.google.api.services.youtube.model.LiveStream;
 import com.google.api.services.youtube.model.LiveStreamListResponse;
 import com.google.api.services.youtube.model.LiveStreamSnippet;
-import com.google.api.services.youtube.model.LiveStreamStatus;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +92,7 @@ public class YoutubeClient {
         status.setPrivacyStatus("public");
         status.setSelfDeclaredMadeForKids(false);
         broadcast.setStatus(status);
-        LiveBroadcastContentDetails contentDetails =new LiveBroadcastContentDetails();
+        LiveBroadcastContentDetails contentDetails = new LiveBroadcastContentDetails();
         contentDetails.set("enableMonitorStream", false);
         broadcast.setContentDetails(contentDetails);
 
@@ -128,11 +127,11 @@ public class YoutubeClient {
                     .setStreamId(streamResponse.getId())
                     .execute();
 
-            var response = client.liveBroadcasts().transition("testing", id.getId(),  "id, snippet, contentDetails").execute();
+            var response = client.liveBroadcasts().transition("testing", id.getId(), "id, snippet, contentDetails").execute();
 
             Thread.sleep(60000L);
 
-            response = client.liveBroadcasts().transition("live", id.getId(),  "id, snippet, contentDetails").execute();
+            response = client.liveBroadcasts().transition("live", id.getId(), "id, snippet, contentDetails").execute();
 
             logger.info("Stream started with id {}", id.getId());
             streamStarted = true;
@@ -155,7 +154,7 @@ public class YoutubeClient {
         String id = findLiveBroadcast();
         if (!id.equals("-1")) {
             try {
-                var response = client.liveBroadcasts().transition("complete", id,  "id, snippet, contentDetails").execute();
+                var response = client.liveBroadcasts().transition("complete", id, "id, snippet, contentDetails").execute();
                 logger.info("{}", response);
             } catch (IOException e) {
                 logger.error("Google json response exception", e);
@@ -163,12 +162,13 @@ public class YoutubeClient {
         }
         streamStarted = false;
     }
+
     public String findLiveBroadcast() {
         try {
             var broadcastResponse = client.liveBroadcasts()
                     .list("id,status").setMine(true).execute();
 
-            return broadcastResponse.getItems().stream().filter( it -> it.getStatus().getLifeCycleStatus().equals("live")).map(
+            return broadcastResponse.getItems().stream().filter(it -> it.getStatus().getLifeCycleStatus().equals("live")).map(
                     LiveBroadcast::getId).findAny().orElse("-1");
         } catch (IOException e) {
             logger.error("Failed to find live broadcasts", e);
@@ -231,8 +231,7 @@ public class YoutubeClient {
             }
 
             return builder.toString();
-        }
-         catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
 

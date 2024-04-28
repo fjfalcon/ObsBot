@@ -44,7 +44,7 @@ public class InetMafiaClient {
         return Optional.of(restTemplate.postForEntity(INET_MAFIA_URL, request, Root.class)).map(HttpEntity::getBody).map(Root::getData).map(LobbyData::getLobby).orElse(Collections.emptyList());
     }
 
-    @Scheduled(fixedDelay = 60  * 1000)
+    @Scheduled(fixedDelay = 60 * 1000)
     public void updateLobby() {
         try {
             var lobby = getLobby();

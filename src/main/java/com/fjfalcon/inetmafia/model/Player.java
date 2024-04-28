@@ -50,6 +50,6 @@ public class Player {
 
     @Override
     public String toString() {
-        return String.format("id: %s, nick: %s, стул: %s", id, nick, position != 0 ? position: "Ведущий");
+        return String.format("id: %s, nick: %s, стул: %s", id, nick, position != 0 ? position : "Ведущий");
     }
 }

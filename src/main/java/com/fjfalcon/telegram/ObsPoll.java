@@ -64,10 +64,8 @@ public class ObsPoll extends TelegramLongPollingBot {
     }
 
 
-
-
     private void parseUpdate(Update update, String text) throws TelegramApiException {
-        logger.info("{} {} @{} sent {}", update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getLastName(),  update.getMessage().getFrom().getUserName(), update.getMessage().getText());
+        logger.info("{} {} @{} sent {}", update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getLastName(), update.getMessage().getFrom().getUserName(), update.getMessage().getText());
         var action = commandActions.get(text.split(" ")[0]);
         if (action == null) {
             sendText(update, "kek");

@@ -5,7 +5,6 @@ import com.fjfalcon.inetmafia.model.Lobby;
 import com.fjfalcon.obs.ObsController;
 import com.fjfalcon.telegram.ObsPoll;
 import com.fjfalcon.youtube.YoutubeClient;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Component
 public class StreamCoordinator {
@@ -119,13 +117,13 @@ public class StreamCoordinator {
             logger.info("Лобби не найдено для игрока {}, возвращаюсь в поиск", nickname);
             return;
         }
-            logger.info("Лобби найдено для игрока {}", nickname);
+        logger.info("Лобби найдено для игрока {}", nickname);
 
         if (lobbies.size() == 1) {
             prepareStreamForLobby(lobbies.getFirst());
         } else {
             prepareStreamForLobby(lobbies.stream().filter(Lobby::getIsLobby).findFirst().orElse(lobbies.stream().filter(l -> l.getPlayers().getPlayers().stream().anyMatch(player -> nickname.equals(player.getNick()) && !player.isDead())).findFirst().get()));
-                    
+
         }
     }
 
@@ -137,16 +135,16 @@ public class StreamCoordinator {
         }
         logger.info("Жду лобби {} для игрока {}", lobby.getId(), nickname);
         if (lobby.getIsLobby()) {
-            int sleep =  generateSleepBasedOnNumberOfPlayers(lobby.getPlayers().getPlayers().size());
+            int sleep = generateSleepBasedOnNumberOfPlayers(lobby.getPlayers().getPlayers().size());
             if (!isStreamSnippingScheduled) {
                 scheduledExecutorService.schedule(new PrepareStreamForLobby(lobby), sleep, TimeUnit.SECONDS);
                 isStreamSnippingScheduled = true;
             }
         } else {
             if (!lobby.getSpectators().equals("5")) {
-                logger.info("Лобби {} заполнено", lobby.getId());
                 joinStream(lobby.getId());
             } else {
+                logger.info("Лобби {} заполнено", lobby.getId());
                 scheduledExecutorService.schedule(new PrepareStreamForLobby(lobby), 5, TimeUnit.SECONDS);
             }
         }

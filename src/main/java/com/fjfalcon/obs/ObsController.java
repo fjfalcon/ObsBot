@@ -1,7 +1,6 @@
 package com.fjfalcon.obs;
 
 import com.fjfalcon.config.ObsProperties;
-import com.google.api.client.json.Json;
 import com.google.gson.JsonObject;
 import io.obswebsocket.community.client.OBSRemoteController;
 import io.obswebsocket.community.client.message.request.inputs.SetInputSettingsRequest;
@@ -114,9 +113,9 @@ public class ObsController {
     }
 
     public boolean isStreamEnabled() {
-         var status = controller.getStreamStatus(1000L);
+        var status = controller.getStreamStatus(1000L);
         logger.info("Obs responded with status {}, with data {}", status.getMessageData().getRequestStatus(), status.getMessageData().getResponseData());
-         return status.getMessageData().getResponseData().getOutputActive();
+        return status.getMessageData().getResponseData().getOutputActive();
     }
 
     public String getUrl() {
