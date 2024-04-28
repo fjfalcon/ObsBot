@@ -64,15 +64,15 @@ public class StreamCoordinator {
             logger.info("Игры в стриме нет");
             if (obsController.isStreamEnabled()) {
                 if (!isTurnOffScheduled) {
-                    scheduledExecutorService.schedule(new StopStreamIfNoOneUsingIt(), 10, TimeUnit.MINUTES);
+                    scheduledExecutorService.schedule(new StopStreamIfNoOneUsingIt(), 20, TimeUnit.MINUTES);
                     isTurnOffScheduled = true;
                 }
             }
 
             if (mode == CoordinatorMode.FOLLOW_MODE) {
                 if (!finderLaunched) {
-                    findLobbyForPlayer();
                     finderLaunched = true;
+                    findLobbyForPlayer();
                 }
             }
         } else
@@ -87,6 +87,7 @@ public class StreamCoordinator {
     public String setFollowMode(String nick) {
         mode = CoordinatorMode.FOLLOW_MODE;
         nickname = nick;
+        findLobbyForPlayer();
         return "Бот переведен в режим follow для игрока " + nick;
     }
 
@@ -104,17 +105,21 @@ public class StreamCoordinator {
         }
     }
 
+    public String getKeys() {
+        return "isTurnOffScheduled " + isTurnOffScheduled + " isStreamSnippingScheduled " + isStreamSnippingScheduled + " nickname " + nickname + " finderLaunched " + finderLaunched + " mode " + mode;
+    }
+
     public void findLobbyForPlayer() {
-        logger.info("Я в поиске лобби для игрока");
+        logger.info("Я в поиске лобби для игрока {} ", nickname);
         inetMafiaService.updateLobby();
         var lobbies = inetMafiaService.getLobby().stream().filter(lobby -> lobby.getPlayers().getPlayers().stream().anyMatch(player -> nickname.equals(player.getNick()))).toList();
-        if (!lobbies.isEmpty()) {
-            logger.info("Лобби найдено для игрока {}", nickname);
-        } else {
+
+        if (lobbies.isEmpty()) {
             finderLaunched = false;
+            logger.info("Лобби не найдено для игрока {}, возвращаюсь в поиск", nickname);
             return;
         }
-
+            logger.info("Лобби найдено для игрока {}", nickname);
 
         if (lobbies.size() == 1) {
             prepareStreamForLobby(lobbies.getFirst());
@@ -125,8 +130,9 @@ public class StreamCoordinator {
     }
 
     private void prepareStreamForLobby(Lobby lobby) {
-        inetMafiaService.updateLobby(lobby);
+        lobby = inetMafiaService.updateLobby(lobby);
         if (lobby == null) {
+            finderLaunched = false;
             return;
         }
         logger.info("Жду лобби {} для игрока {}", lobby.getId(), nickname);
@@ -138,6 +144,7 @@ public class StreamCoordinator {
             }
         } else {
             if (!lobby.getSpectators().equals("5")) {
+                logger.info("Лобби {} заполнено", lobby.getId());
                 joinStream(lobby.getId());
             } else {
                 scheduledExecutorService.schedule(new PrepareStreamForLobby(lobby), 5, TimeUnit.SECONDS);
@@ -153,6 +160,7 @@ public class StreamCoordinator {
             }
 
             obsPoll.sendTextToMe("Стрим присоединился к игре " + id);
+            logger.info("Стрим присоединился к игре {}", id);
             finderLaunched = false;
         }
     }
