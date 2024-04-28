@@ -1,6 +1,7 @@
 package com.fjfalcon.telegram;
 
 import com.fjfalcon.config.BotProperties;
+import com.fjfalcon.coordinator.StreamCoordinator;
 import com.fjfalcon.inetmafia.client.InetMafiaService;
 import com.fjfalcon.obs.ObsController;
 import com.fjfalcon.youtube.YoutubeClient;
@@ -21,13 +22,15 @@ public class ObsPoll extends TelegramLongPollingBot {
     private final ObsController obsController;
     private final YoutubeClient youtubeClient;
     private final InetMafiaService inetMafiaService;
+    private final StreamCoordinator streamCoordinator;
 
-    public ObsPoll(BotProperties botProperties, ObsController obsController, YoutubeClient youtubeClient, InetMafiaService inetMafiaService) {
+    public ObsPoll(BotProperties botProperties, ObsController obsController, YoutubeClient youtubeClient, InetMafiaService inetMafiaService, StreamCoordinator streamCoordinator) {
         super(botProperties.getPassword());
         this.botProperties = botProperties;
         this.obsController = obsController;
         this.youtubeClient = youtubeClient;
         this.inetMafiaService = inetMafiaService;
+        this.streamCoordinator = streamCoordinator;
     }
 
     @Override
@@ -52,6 +55,8 @@ public class ObsPoll extends TelegramLongPollingBot {
                 youtubeClient.checkStreamStarted();
                 sendText(update, "Запуск стрима на ютубе закончен");
             }
+
+            streamCoordinator.disableFollowMode();
         } else if (text.contains("/get_live")) {
             sendText(update, youtubeClient.findLiveBroadcast());
         } else if (text.contains("/reset")) {
@@ -85,7 +90,10 @@ public class ObsPoll extends TelegramLongPollingBot {
             sendText(update, msg);
         } else if (text.contains("/chat_id")) {
             sendText(update, update.getMessage().getChatId().toString());
-        } else {
+        } else if (text.contains("/follow")) {
+            var msg = streamCoordinator.setFollowMode(text.substring(8));
+            sendText(update, msg);
+        }else {
             sendText(update, "kek");
         }
     }

@@ -1,17 +1,21 @@
 package com.fjfalcon.coordinator;
 
 import com.fjfalcon.inetmafia.client.InetMafiaService;
+import com.fjfalcon.inetmafia.model.Lobby;
 import com.fjfalcon.obs.ObsController;
 import com.fjfalcon.telegram.ObsPoll;
 import com.fjfalcon.youtube.YoutubeClient;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Component
 public class StreamCoordinator {
@@ -22,10 +26,13 @@ public class StreamCoordinator {
     private final ScheduledExecutorService scheduledExecutorService;
     private final YoutubeClient youtubeClient;
     private final ObsPoll obsPoll;
-    private CoordinatorMode mode;
+    private CoordinatorMode mode = CoordinatorMode.SET_MODE;
     private boolean isTurnOffScheduled = false;
+    private boolean isStreamSnippingScheduled = false;
+    private String nickname = "";
+    private boolean finderLaunched = false;
 
-    public StreamCoordinator(ObsController obsController, InetMafiaService inetMafiaService, YoutubeClient youtubeClient, ObsPoll obsPoll) {
+    public StreamCoordinator(ObsController obsController, InetMafiaService inetMafiaService, YoutubeClient youtubeClient, @Lazy ObsPoll obsPoll) {
         this.obsController = obsController;
         this.inetMafiaService = inetMafiaService;
         this.youtubeClient = youtubeClient;
@@ -54,25 +61,124 @@ public class StreamCoordinator {
     @Scheduled(fixedDelay = 1000 * 60)
     public void checkStreamState() {
         if (isGameNotRunning()) {
+            logger.info("Игры в стриме нет");
             if (obsController.isStreamEnabled()) {
                 if (!isTurnOffScheduled) {
-                    scheduledExecutorService.schedule(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (obsController.isStreamEnabled()) {
-                                if (isGameNotRunning()) {
-                                    youtubeClient.stopStreaming();
-                                    obsController.stopStreaming();
-                                    logger.info("Turning off stream");
-                                    obsPoll.sendTextToMe("Stream is stopped");
-                                }
-                            }
-                        }
-                    }, 10, TimeUnit.MINUTES);
+                    scheduledExecutorService.schedule(new StopStreamIfNoOneUsingIt(), 10, TimeUnit.MINUTES);
                     isTurnOffScheduled = true;
+                }
+            }
+
+            if (mode == CoordinatorMode.FOLLOW_MODE) {
+                if (!finderLaunched) {
+                    findLobbyForPlayer();
+                    finderLaunched = true;
                 }
             }
         } else
             isTurnOffScheduled = false;
+    }
+
+    public void disableFollowMode() {
+        nickname = "";
+        mode = CoordinatorMode.SET_MODE;
+    }
+
+    public String setFollowMode(String nick) {
+        mode = CoordinatorMode.FOLLOW_MODE;
+        nickname = nick;
+        return "Бот переведен в режим follow для игрока " + nick;
+    }
+
+    private class StopStreamIfNoOneUsingIt implements Runnable {
+        @Override
+        public void run() {
+            if (obsController.isStreamEnabled()) {
+                if (isGameNotRunning()) {
+                    youtubeClient.stopStreaming();
+                    obsController.stopStreaming();
+                    logger.info("Turning off stream");
+                    obsPoll.sendTextToMe("Stream is stopped");
+                }
+            }
+        }
+    }
+
+    public void findLobbyForPlayer() {
+        logger.info("Я в поиске лобби для игрока");
+        inetMafiaService.updateLobby();
+        var lobbies = inetMafiaService.getLobby().stream().filter(lobby -> lobby.getPlayers().getPlayers().stream().anyMatch(player -> nickname.equals(player.getNick()))).toList();
+        if (!lobbies.isEmpty()) {
+            logger.info("Лобби найдено для игрока {}", nickname);
+        } else {
+            finderLaunched = false;
+            return;
+        }
+
+
+        if (lobbies.size() == 1) {
+            prepareStreamForLobby(lobbies.getFirst());
+        } else {
+            prepareStreamForLobby(lobbies.stream().filter(Lobby::getIsLobby).findFirst().orElse(lobbies.stream().filter(l -> l.getPlayers().getPlayers().stream().anyMatch(player -> nickname.equals(player.getNick()) && !player.isDead())).findFirst().get()));
+                    
+        }
+    }
+
+    private void prepareStreamForLobby(Lobby lobby) {
+        inetMafiaService.updateLobby(lobby);
+        if (lobby == null) {
+            return;
+        }
+        logger.info("Жду лобби {} для игрока {}", lobby.getId(), nickname);
+        if (lobby.getIsLobby()) {
+            int sleep =  generateSleepBasedOnNumberOfPlayers(lobby.getPlayers().getPlayers().size());
+            if (!isStreamSnippingScheduled) {
+                scheduledExecutorService.schedule(new PrepareStreamForLobby(lobby), sleep, TimeUnit.SECONDS);
+                isStreamSnippingScheduled = true;
+            }
+        } else {
+            if (!lobby.getSpectators().equals("5")) {
+                joinStream(lobby.getId());
+            } else {
+                scheduledExecutorService.schedule(new PrepareStreamForLobby(lobby), 5, TimeUnit.SECONDS);
+            }
+        }
+    }
+
+    private void joinStream(int id) {
+        if (isGameNotRunning()) {
+            obsController.setUrl(id + "");
+            if (!obsController.isStreamEnabled()) {
+                youtubeClient.checkStreamStarted();
+            }
+
+            obsPoll.sendTextToMe("Стрим присоединился к игре " + id);
+            finderLaunched = false;
+        }
+    }
+
+    private int generateSleepBasedOnNumberOfPlayers(int size) {
+        if (size <= 5) {
+            return 20;
+        } else if (size <= 9) {
+            return 15;
+        } else {
+            return 5;
+        }
+    }
+
+    private class PrepareStreamForLobby implements Runnable {
+        private final Lobby lobby;
+
+        private PrepareStreamForLobby(Lobby lobby) {
+            this.lobby = lobby;
+        }
+
+        @Override
+        public void run() {
+            isStreamSnippingScheduled = false;
+            prepareStreamForLobby(lobby);
+
+        }
     }
 }

@@ -1,9 +1,11 @@
 package com.fjfalcon.inetmafia.client;
 
+import com.fjfalcon.inetmafia.model.Lobby;
 import com.fjfalcon.inetmafia.model.Player;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,5 +28,15 @@ public class InetMafiaService {
 
     public void updateLobby() {
         inetMafiaClient.updateLobby();
+    }
+
+    public Lobby updateLobby(Lobby lobby) {
+        inetMafiaClient.updateLobby();
+        return inetMafiaClient.getLobbies().stream().filter(l -> lobby.getId() == l.getId()).findAny().orElse(null);
+    }
+
+    public List<Lobby> getLobby() {
+        inetMafiaClient.updateLobby();
+        return inetMafiaClient.getLobbies();
     }
 }
