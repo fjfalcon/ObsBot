@@ -56,6 +56,12 @@ public class StreamCoordinator {
         return true;
     }
 
+    public void resetStreamCoordinator() {
+        isStreamSnippingScheduled = false;
+        isTurnOffScheduled = false;
+        finderLaunched = false;
+    }
+
     @Scheduled(fixedDelay = 1000 * 60)
     public void checkStreamState() {
         if (isGameNotRunning()) {
@@ -98,6 +104,7 @@ public class StreamCoordinator {
                     obsController.stopStreaming();
                     logger.info("Turning off stream");
                     obsPoll.sendTextToMe("Stream is stopped");
+                    isTurnOffScheduled = false;
                 }
             }
         }
@@ -129,7 +136,7 @@ public class StreamCoordinator {
 
     private void prepareStreamForLobby(Lobby lobby) {
         lobby = inetMafiaService.updateLobby(lobby);
-        if (lobby == null) {
+        if (lobby == null || lobby.getPlayers().getPlayers().stream().noneMatch(player -> player.getNick().equals(nickname))) {
             finderLaunched = false;
             return;
         }
@@ -168,8 +175,10 @@ public class StreamCoordinator {
             return 20;
         } else if (size <= 9) {
             return 15;
+        } else if (size == 10){
+            return 3;
         } else {
-            return 5;
+            return 1;
         }
     }
 

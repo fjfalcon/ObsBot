@@ -38,9 +38,20 @@ public class ObsPoll extends TelegramLongPollingBot {
             Map.entry("/players", wrapConsumer(this::handlePlayers)),
             Map.entry("/chat_id", wrapConsumer(this::handleChatId)),
             Map.entry("/follow", wrapConsumer(this::handleFollow)),
-            Map.entry("/coordinator", wrapConsumer(this::handleCoordinator))
+            Map.entry("/coordinator", wrapConsumer(this::handleCoordinator)),
+            Map.entry("/unfollow", wrapConsumer(this::handleUnfollow)),
+            Map.entry("/resetCoordinator", wrapConsumer(this::handleResetCoordinator))
     );
 
+    private void handleResetCoordinator(Update update, String s) throws TelegramApiException {
+        streamCoordinator.resetStreamCoordinator();
+        sendText(update, "ok");
+    }
+
+    private void handleUnfollow(Update update, String s) throws TelegramApiException {
+        streamCoordinator.disableFollowMode();
+        sendText(update, "ok");
+    }
 
     public ObsPoll(BotProperties botProperties, ObsController obsController, YoutubeClient youtubeClient, InetMafiaService inetMafiaService, StreamCoordinator streamCoordinator) {
         super(botProperties.getPassword());

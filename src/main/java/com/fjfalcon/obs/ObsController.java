@@ -14,7 +14,7 @@ public class ObsController {
     private final Logger logger = LoggerFactory.getLogger(ObsController.class);
     private final OBSRemoteController controller;
 
-    private boolean isConnected;
+    private volatile boolean isConnected;
 
     public ObsController(ObsProperties obsProperties) {
         this.controller = OBSRemoteController
@@ -86,10 +86,9 @@ public class ObsController {
         }
     }
 
-    public String startStreaming() {
+    public void startStreaming() {
         var response = controller.startStream(1000L);
         logger.info("Obs responded with status {}, with data {}", response.getMessageData().getRequestStatus(), response.getMessageData().getResponseData());
-        return "ok";
     }
 
     public String stopStreaming() {
